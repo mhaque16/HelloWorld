@@ -4,7 +4,7 @@ FREE AI OPTION (NO API KEY OR TEACHING)
 
 1. Install Python and run Setup Mac.command as described below.
 2. Download/install Ollama from https://ollama.com/download/mac and open its app.
-3. Double-click Prepare Free AI Mac.command. Press Return when prompted to download
+3. Double-click Prepare Free AI Mac.command. It starts Ollama if needed. Press Return when prompted to download
    the Gemma 3 4B vision model. The download is several GB; 16 GB+ memory is recommended.
 4. Open the agent, click AI settings, and choose Free local (Ollama).
 5. Check Use AI discovery, save, and click Run automatically now.
