@@ -1,5 +1,27 @@
 DUNKIN PRICE AGENT FOR MAC
 
+NEW: AI MODE WITHOUT TEACHING
+
+After installation, open the app and click AI settings.
+1. Create an OpenAI API key using the Open API key page button.
+   API usage is billed separately; a ChatGPT subscription does not include it.
+2. Enter the key in the app. It is stored in your Mac Keychain, not in the ZIP.
+3. Enable Use AI discovery, choose a maximum number of AI calls per store, and Save.
+4. Click Run automatically now. The agent inspects screenshots/page text, searches
+   for your store, opens categories and options, and reads observed prices.
+5. After a successful test, enable daily scheduling if you want it.
+
+You do not need to pick selectors or teach pages in AI mode. Screenshots and page
+text are sent to OpenAI during each run. The AI-call limit is not a dollar cap;
+check your API billing settings. No paid calls were made in development.
+
+AI may miss options or fail to navigate a page. The app rejects unobserved prices,
+wrong-store evidence, ambiguous sizes and transaction controls. Incomplete runs
+are marked partial/failed in Excel; do not assume full-menu coverage. Actual AI
+API calls and live Dunkin collection still need validation on your Mac.
+
+Below are installation instructions and the OPTIONAL older teaching workflow.
+
 1. Extract the ZIP into a permanent folder under your home folder, such as
    /Users/your-name/DunkinPriceAgent. Keep it out of Downloads, Desktop, Documents
    and iCloud-synced folders to avoid background-job access restrictions.
@@ -33,7 +55,7 @@ Mac awake and signed in at the scheduled time. The app can be closed between run
 Click Disable before moving or deleting the app folder. On newer macOS versions,
 background jobs may also need to be allowed in System Settings > General > Login Items.
 
-The agent collects ONLY taught pages. It does not automatically open other menu
+In the optional taught-layout mode, the agent collects ONLY taught pages. It does not automatically open other menu
 tabs or size choices. If those choices are not preserved after a page reload,
 the automatic test stops. Use Collect with browser help for those pages until
 a site-specific replay workflow is available. Layout or session changes may need

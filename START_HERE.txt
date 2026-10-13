@@ -1,5 +1,18 @@
 DUNKIN PRICE COMPARISON - WINDOWS PC
 
+NEW: AI DISCOVERY WITHOUT TEACHING
+
+After setup, open the desktop app and click AI settings. Add an OpenAI API key,
+enable Use AI discovery, then click Run automatically now. The key is stored in
+Windows Credential Manager. API billing is separate from a ChatGPT subscription.
+The agent reads screenshots and page text, chooses observed menu controls, and
+records prices grounded in displayed store/channel/item/size evidence. No manual
+selector teaching is needed in AI mode. Screenshots and page text go to OpenAI.
+
+The AI-call limit is not a dollar cap. The agent may miss options or stop when it
+cannot validate a price; check Store Status. Actual AI API calls and live Dunkin
+collection remain unverified. The instructions below cover optional taught layouts.
+
 DESKTOP AGENT: RUN NOW + DAILY AUTORUN
 
 1. Extract the ZIP to a permanent folder on your PC.
@@ -35,7 +48,7 @@ same place; disable the schedule before moving or deleting the folder.
 
 IMPORTANT LIMITS
 
-The agent checks ONLY taught pages. It does not independently discover stores,
+In the optional taught-layout mode, the agent checks ONLY taught pages. It does not independently discover stores,
 open other menu tabs, or choose sizes. If the website does not preserve a taught
 category/size on reload, the automatic test will fail. Use "Collect with browser
 help" for those pages; they need a site-specific automation workflow before they

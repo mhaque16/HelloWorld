@@ -105,8 +105,8 @@ def launch_visible(p, requested: str, headless: bool = False):
             return p.chromium.launch(**kwargs)
         except Exception as exc:
             errors.append(f"{choice}: {exc}")
-    raise RuntimeError("Could not start a visible browser. Run setup_windows.bat, or use --browser edge "
-                       "with Microsoft Edge installed.\n" + "\n".join(errors))
+    raise RuntimeError("Could not start the browser. Run Setup Mac.command on Mac or setup_windows.bat "
+                       "on Windows. Installed Chrome/Edge can also be tried.\n" + "\n".join(errors))
 
 
 def collect_interactive(store: Store, browser_choice: str, journal: Path, training: bool = False):

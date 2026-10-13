@@ -1,5 +1,52 @@
 # Dunkin store price comparison
 
+## AI page discovery: no teaching required
+
+The desktop app now has **AI settings**. With an OpenAI API key and separate API
+billing, enable AI discovery and click **Run automatically now**. The planner
+receives a screenshot and numbered DOM evidence each step, searches for the store,
+chooses menu controls, opens categories/items/options, and collects observed prices.
+It runs afresh on each job rather than relying on taught selectors. Existing guided
+collection and taught layouts remain optional alternatives.
+
+API keys are entered only in the local app and stored with the native Mac Keychain
+or Windows Credential Manager. Linux can use `OPENAI_API_KEY`. No credentials are
+saved in source, settings JSON, traces, logs, GitHub, or bundles. During AI runs,
+ordering-page screenshots and extracted page text are sent to OpenAI's API. The
+default planner is `gpt-4.1-mini` using the Chat Completions API. A ChatGPT subscription
+does not include API usage. Daily AI scheduling requires an explicit confirmation.
+The configurable 1–200 calls-per-store limit bounds calls, **not dollar spending**.
+
+The model cannot supply free-form prices to the exporter: it must cite current
+DOM elements for selected-store address, active channel, name, category, variant,
+and an exact dollar price. Addresses accept standard street abbreviations while
+requiring the numbered street, city, and state. Name and price must share a small
+card/dialog; inactive variant/category controls, changed evidence, ranges, inferred
+currencies, unobserved IDs, and conflicting prices are rejected. Only address-search
+fields may be filled, only configured addresses may be entered, and unobserved select
+options are rejected. Checkout, login and add-to-cart controls are blocked. API
+credentials are never given to the planner. Page text is treated as untrusted data.
+
+The renderer currently inspects DOM-backed controls in the main document; embedded
+frames, canvas-only controls, unusual markup, and nonstandard selected-store/channel
+labels may fail. For a provider that cannot be reached automatically, an optional
+ordering URL can be entered in the store editor. This is a bounded AI navigation
+loop, not guaranteed autonomous coverage of every site/menu. Completion is the AI's
+assessment; **full-menu coverage is not independently verified**. Already validated
+rows from a blocked/budget-limited run are retained with `partial` status. Three
+consecutive validation errors stop that store; no price estimates are substituted.
+
+Browser traversal and option extraction are tested in real Chromium with synthetic
+pages and a scripted planner; provider payload/error handling is mocked. **No live
+paid AI calls were made**, and live Dunkin behavior, Mac Keychain access, native
+desktop UI and OS scheduling still require real-machine validation. Use the first
+run to review Excel against the actual menu before relying on scheduled comparisons.
+
+Download the updated package, extract to a new folder, and rerun setup to install
+the new `keyring` dependency. If an older folder has a daily schedule, disable it
+there first. Your existing address CSVs can be copied into the new folder's `data`
+directory; keep session files and API keys local.
+
 Download the [Mac agent ZIP](https://github.com/mhaque16/HelloWorld/raw/refs/heads/master/downloads/DunkinPriceAgent-Mac.zip).
 If the direct download does not open, use its [GitHub file page](https://github.com/mhaque16/HelloWorld/blob/master/downloads/DunkinPriceAgent-Mac.zip)
 and click **Download raw file**. Mac setup instructions are in `START_HERE_MAC.txt`.
@@ -32,8 +79,9 @@ or menu URLs. Field picking, bulk preview, confirmation, navigation, and export
 are tested with synthetic pages in actual Chromium. Dunkin's live ordering
 interface and the Windows launchers have not been tested here.
 
-Fully automatic address lookup and a verified Dunkin-specific extraction profile
-are not implemented. The national menu is not a source of store-specific prices.
+A verified Dunkin-specific extraction profile is not implemented. AI mode attempts
+generic store search from observed page controls, but still needs live validation.
+The national menu is not a source of store-specific prices.
 
 ## Desktop agent: one-click and daily runs
 
@@ -41,7 +89,7 @@ After Windows setup, open **open_agent.bat**. The desktop app lets you edit both
 store lists, teach menu pages, run now, open reports, and enable/disable daily
 autorun. No CSV editing or terminal commands are needed after installation.
 
-Select each store and **Teach selected store**. On its actual ordering page,
+For the optional taught-layout mode, select each store and **Teach selected store**. On its actual ordering page,
 confirm the selected store/channel and pick visible address, category, size,
 item-name and price text. Preview and review all similar cards, then **Teach
 autorun this page**. Repeat for every page you want covered. Finish teaching,
@@ -55,7 +103,7 @@ If these checks fail, the store has no price rows and the failure is recorded.
 Address/channel edits invalidate teaching. Conflicting prices are rejected.
 Jobs use a process lock to prevent overlapping scheduled/manual runs.
 
-Autorun covers **only taught pages**, not the full menu by default. It does not
+Taught-layout autorun covers **only taught pages**, not the full menu by default. It does not
 replay store-selection clicks, category tabs, or size-option dialogs. If those
 selections are not preserved by the page URL/session, the fresh-browser test
 fails; use guided collection until a site-specific replay workflow is built.

@@ -39,8 +39,8 @@ class App:
         ttk.Button(buttons, text='Open Excel reports', command=lambda: self.open_folder(ROOT / 'reports')).pack(side='left')
         ttk.Button(buttons, text='View run logs', command=lambda: self.open_folder(ROOT / 'logs')).pack(side='left', padx=8)
         ttk.Separator(frame).pack(fill='x', pady=14)
-        ttk.Label(frame, text='First time: teach the agent', font=('Segoe UI', 12, 'bold')).pack(anchor='w')
-        ttk.Label(frame, text='Select a store, open its priced menu, and teach each page you want checked.\nThen test an automatic run before enabling a schedule.').pack(anchor='w')
+        ttk.Label(frame, text='Automatic collection', font=('Segoe UI', 12, 'bold')).pack(anchor='w')
+        ttk.Label(frame, text='AI mode discovers page controls without teaching. Add your API key in AI settings.\nManual browser help and taught layouts remain optional. Test Run now before scheduling.').pack(anchor='w')
         self.tree = ttk.Treeview(frame, columns=('group', 'address', 'ready'), show='headings', height=5)
         for key, label, width in [('group', 'Group', 95), ('address', 'Store address', 490), ('ready', 'Autorun setup', 180)]:
             self.tree.heading(key, text=label)
@@ -49,7 +49,7 @@ class App:
         actions = ttk.Frame(frame)
         actions.pack(fill='x')
         self.job_buttons = []
-        for text, action in [('Teach selected store', self.teach), ('Run automatically now', lambda: self.start_job('run')),
+        for text, action in [('AI settings', self.ai_settings), ('Optional: teach a layout', self.teach), ('Run automatically now', lambda: self.start_job('run')),
                              ('Collect with browser help', lambda: self.start_job('guided'))]:
             button = ttk.Button(actions, text=text, command=action)
             button.pack(side='left', padx=(0, 8))
@@ -63,7 +63,7 @@ class App:
         ttk.Button(schedule, text='Disable', command=self.disable_schedule).pack(side='left', padx=4)
         self.schedule_status = ttk.Label(frame, text='Scheduling requires your computer awake and your user signed in.')
         self.schedule_status.pack(anchor='w')
-        self.status = tk.StringVar(value='Ready. Start by teaching each store, or choose browser help.')
+        self.status = tk.StringVar(value='Ready. Open AI settings for automatic page discovery, or use browser help.')
         ttk.Label(frame, textvariable=self.status, wraplength=800).pack(anchor='w', pady=10)
         self.log = tk.Text(frame, height=7, wrap='word', state='disabled', font=('Consolas', 10))
         self.log.pack(fill='both', expand=True)
@@ -74,10 +74,18 @@ class App:
         self.tree.delete(*self.tree.get_children())
         try:
             profiles = json.loads((ROOT / 'config/profiles.json').read_text())
-            for store in read_all(ROOT):
+            from .ai_runner import settings
+            ai = settings(ROOT)
+            stores=read_all(ROOT)
+            from .ai_runner import store_signature
+            for store in stores:
                 config = profiles.get(store.profile, {})
-                ready = 'Needs teaching'
-                if config.get('mode') == 'trained' and config.get('store_id') == store.store_id:
+                ready = 'Choose AI mode'
+                if ai.get('enabled'):
+                    ready = 'AI discovers page'
+                    if ai.get('last_validated_at') and ai.get('last_validated_stores')==store_signature(stores):
+                        ready += ' · tested'
+                elif config.get('mode') == 'trained' and config.get('store_id') == store.store_id:
                     ready = f"{len(config.get('pages', []))} taught pages"
                     if config.get('last_validated_at'):
                         ready += ' · tested'
@@ -114,6 +122,12 @@ class App:
             if command == 'run':
                 missing = automatic_missing()
                 if missing:
+                    from .ai_runner import settings
+                    if not settings(ROOT).get('enabled'):
+                        messagebox.showinfo('Enable page discovery',
+                                            'Open AI settings to enable automatic page discovery with your API key. No teaching is required in AI mode.',parent=self.window)
+                        self.ai_settings()
+                        return
                     messagebox.showinfo('First-time setup needed', '\n'.join(missing), parent=self.window)
                     return
             interpreter = Path(sys.executable)
@@ -155,6 +169,15 @@ class App:
 
     def enable_schedule(self):
         try:
+            missing=automatic_missing(require_test=True)
+            if missing:
+                raise ValueError('\n'.join(missing))
+            from .ai_runner import settings
+            if settings(ROOT).get('enabled') and not messagebox.askyesno(
+                    'Enable daily AI usage?',
+                    'Daily runs send ordering-page screenshots/text to OpenAI and use your API billing account. '
+                    'The AI-step limit is not a dollar-spending limit. Enable daily AI runs?',parent=self.window):
+                return
             configure_schedule(self.time.get())
             self.refresh()
             messagebox.showinfo('Daily autorun enabled', 'The agent will check taught pages daily while this computer is awake and you are signed in. Reports and logs are saved locally.', parent=self.window)
@@ -168,13 +191,71 @@ class App:
         except Exception as exc:
             messagebox.showerror('Could not disable schedule', str(exc), parent=self.window)
 
+    def ai_settings(self):
+        if self.process:
+            return
+        from .ai_runner import settings
+        from .ai_credentials import get_key, save_key
+        from .training import atomic_json
+        config=settings(ROOT)
+        dialog=tk.Toplevel(self.window)
+        dialog.title('AI page discovery settings')
+        dialog.geometry('620x410')
+        dialog.transient(self.window)
+        dialog.grab_set()
+        frame=ttk.Frame(dialog,padding=16)
+        frame.pack(fill='both',expand=True)
+        ttk.Label(frame,text='No teaching: AI reads the page and its options',font=('Segoe UI',13,'bold')).pack(anchor='w')
+        def api_key_page():
+            import webbrowser
+            webbrowser.open('https://platform.openai.com/api-keys')
+        ttk.Button(frame,text='Open API key page',command=api_key_page).pack(anchor='w')
+        ttk.Label(frame,text='Requires an OpenAI API key with separate API billing. ChatGPT subscriptions\ndo not include API usage. Screenshots and menu-page text are sent to OpenAI.').pack(anchor='w',pady=10)
+        enabled=tk.BooleanVar(value=config.get('enabled',False))
+        shown=tk.BooleanVar(value=config.get('show_browser',True))
+        steps=tk.StringVar(value=str(config.get('max_steps',60)))
+        key=tk.StringVar()
+        ttk.Checkbutton(frame,text='Use AI discovery for Run now and scheduled runs',variable=enabled).pack(anchor='w')
+        ttk.Label(frame,text='API key (saved in Mac Keychain or Windows Credential Manager)').pack(anchor='w',pady=(10,0))
+        ttk.Entry(frame,textvariable=key,show='•',width=65).pack(fill='x')
+        ttk.Label(frame,text='A key is already available; leave blank to keep it.' if get_key() else 'No key is saved. Enter it here; never paste it into chat.').pack(anchor='w')
+        line=ttk.Frame(frame)
+        line.pack(fill='x',pady=10)
+        ttk.Label(line,text='Maximum AI calls per store (1–200):').pack(side='left')
+        ttk.Entry(line,textvariable=steps,width=6).pack(side='left',padx=8)
+        ttk.Checkbutton(frame,text='Show the browser while AI works',variable=shown).pack(anchor='w')
+        ttk.Label(frame,text='The call limit is not a dollar cap. Check your API billing limits.\nPrices require observed store, channel, item, size and exact price evidence.').pack(anchor='w',pady=8)
+        def save():
+            try:
+                limit=int(steps.get())
+                if not 1<=limit<=200:
+                    raise ValueError('Choose 1–200 calls per store.')
+                schedule_file=ROOT/'local_state/schedule.json'
+                if enabled.get() and not config.get('enabled') and schedule_file.exists() and json.loads(schedule_file.read_text()).get('enabled'):
+                    if not messagebox.askyesno('Use AI in the existing daily schedule?',
+                                               'Your daily schedule will also send page screenshots/text to OpenAI and use your API billing account. Continue?',parent=dialog):
+                        return
+                if key.get().strip():
+                    save_key(key.get())
+                if enabled.get() and not get_key():
+                    raise ValueError('An API key is required to enable AI discovery.')
+                atomic_json(ROOT/'local_state/ai_settings.json',{
+                    'enabled':enabled.get(),'max_steps':limit,'show_browser':shown.get()})
+                key.set('')
+                dialog.destroy()
+                self.refresh()
+                self.status.set('AI settings saved. Click Run automatically now to test. No teaching is required in AI mode.')
+            except Exception as exc:
+                messagebox.showerror('Could not save AI settings',str(exc),parent=dialog)
+        ttk.Button(frame,text='Save settings',command=save).pack(anchor='e')
+
     def edit_stores(self, group):
         if self.process:
             messagebox.showinfo('Collection is running', 'Finish collection before editing stores.', parent=self.window)
             return
         dialog = tk.Toplevel(self.window)
         dialog.title('Our stores' if group == 'parent' else 'Competitor stores')
-        dialog.geometry('680x440')
+        dialog.geometry('680x510')
         dialog.transient(self.window)
         dialog.grab_set()
         stores = [s for s in read_all(ROOT) if s.group == group]
@@ -183,6 +264,7 @@ class App:
         tree.column('address', width=640)
         tree.pack(fill='x', padx=12, pady=12)
         address, market, channel = tk.StringVar(), tk.StringVar(value='northern_va'), tk.StringVar(value='pickup')
+        menu_url=tk.StringVar()
         def list_stores():
             tree.delete(*tree.get_children())
             for store in stores:
@@ -190,13 +272,15 @@ class App:
         def selected(event=None):
             if tree.selection():
                 store = next(s for s in stores if s.store_id == tree.selection()[0])
-                address.set(store.address);market.set(store.market);channel.set(store.channel)
+                address.set(store.address);market.set(store.market);channel.set(store.channel);menu_url.set(store.menu_url)
         tree.bind('<<TreeviewSelect>>', selected)
         for label, variable in [('Full address', address), ('Comparison area (same for stores you want compared)', market)]:
             ttk.Label(dialog, text=label).pack(anchor='w', padx=12)
             ttk.Entry(dialog, textvariable=variable).pack(fill='x', padx=12)
         ttk.Label(dialog, text='Pricing channel').pack(anchor='w', padx=12)
         ttk.Combobox(dialog, textvariable=channel, values=['pickup', 'delivery', 'in_store'], state='readonly').pack(anchor='w', padx=12)
+        ttk.Label(dialog,text='Ordering page URL (optional; leave blank to start on Dunkin)').pack(anchor='w',padx=12,pady=(8,0))
+        ttk.Entry(dialog,textvariable=menu_url).pack(fill='x',padx=12)
         row = ttk.Frame(dialog, padding=12)
         row.pack(fill='x')
         def save(add=False):
@@ -205,19 +289,25 @@ class App:
                 return
             if add:
                 stores.append(Store(group, group+'_'+uuid.uuid4().hex[:10], 'Dunkin', address.get().strip(),
-                                    market.get().strip(), channel.get(), '', 'structured_menu'))
+                                    market.get().strip(), channel.get(), menu_url.get().strip(), 'structured_menu'))
             elif tree.selection():
                 index = next(i for i,s in enumerate(stores) if s.store_id == tree.selection()[0])
                 store = stores[index]
-                changed = store.address != address.get().strip() or store.channel != channel.get()
+                changed = store.address != address.get().strip() or store.channel != channel.get() or store.menu_url!=menu_url.get().strip()
                 stores[index] = replace(store, address=address.get().strip(), market=market.get().strip(),
                                         channel=channel.get(), profile='structured_menu' if changed else store.profile,
-                                        menu_url='' if changed else store.menu_url)
+                                        menu_url=menu_url.get().strip())
             else:
                 messagebox.showinfo('Choose a store', 'Choose an existing store or click Add as new store.', parent=dialog)
                 return
             try:
                 write_group(ROOT, group, stores)
+                from .ai_runner import settings
+                from .training import atomic_json
+                ai=settings(ROOT)
+                if ai:
+                    ai.pop('last_validated_at',None)
+                    atomic_json(ROOT/'local_state/ai_settings.json',ai)
                 list_stores();self.refresh()
             except Exception as exc:
                 messagebox.showerror('Could not save', str(exc), parent=dialog)

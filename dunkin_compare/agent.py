@@ -55,6 +55,19 @@ def automatic_missing(root=ROOT, require_test=False):
     ids = [s.store_id for s in stores]
     if len(ids) != len(set(ids)):
         return ['Store IDs must be unique.']
+    from .ai_runner import settings
+    ai=settings(root)
+    if ai.get('enabled'):
+        from .ai_credentials import get_key
+        missing=[]
+        if not get_key():
+            missing.append('Open AI settings and add your API key on this computer.')
+        if any(s.channel not in ('pickup','delivery') for s in stores):
+            missing.append('AI web collection supports pickup and delivery, not inferred in-store prices.')
+        from .ai_runner import store_signature
+        if require_test and (not ai.get('last_validated_at') or ai.get('last_validated_stores')!=store_signature(stores)):
+            missing.append('Run automatically now to test AI collection before scheduling.')
+        return missing
     missing = []
     for store in stores:
         profile = profiles.get(store.profile, {})
@@ -187,6 +200,9 @@ def main(argv=None):
                 missing = automatic_missing()
                 if missing:
                     raise ValueError('Automatic setup needs attention:\n' + '\n'.join(missing))
+                from .ai_runner import settings, run
+                if settings(ROOT).get('enabled'):
+                    return run(ROOT)
                 result = collect_main([])
                 if result == 0:
                     from .training import atomic_json

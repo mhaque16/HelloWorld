@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Synthetic adaptive menu</title>
+<style>body{font:16px Arial;margin:20px}header{padding:12px;background:#eee}button,input,select{padding:8px;margin:6px}
+[role=dialog]{padding:20px;border:2px solid #333;width:400px}.card{padding:15px;border:1px solid #aaa;width:300px}</style>
+</head><body>
+<header><div id="selected-store">No store selected</div><button id="pickup" aria-pressed="true">Pickup</button><button aria-pressed="false">Delivery</button></header>
+<button id="find">Find a store</button>
+<div id="search" hidden><input id="address" placeholder="Search address"><button id="search-button">Search</button></div>
+<main id="menu" hidden>
+<nav><button role="tab" id="coffee" aria-selected="true">Coffee</button><button role="tab" id="donuts" aria-selected="false">Donuts</button></nav>
+<div role="button" class="card" id="product" tabindex="0"><h3 id="card-name">Hot Coffee</h3><span>From $2.49</span></div>
+</main>
+<section role="dialog" id="options" hidden><h2 id="item-name">Hot Coffee</h2>
+<select id="size" aria-label="Size"><option value="small">Small</option><option value="medium">Medium</option></select>
+<p id="exact-price">$2.49</p><button id="close">Close options</button><button id="cart">Add to cart</button></section>
+<script>
+let category='Coffee';
+document.getElementById('find').onclick=()=>document.getElementById('search').hidden=false;
+document.getElementById('search-button').onclick=()=>{
+ document.getElementById('selected-store').textContent=document.getElementById('address').value.replace('Boulevard','Blvd');
+ document.getElementById('search').hidden=true;document.getElementById('menu').hidden=false;
+};
+function choose(value){
+ category=value;document.getElementById('coffee').setAttribute('aria-selected',String(value==='Coffee'));
+ document.getElementById('donuts').setAttribute('aria-selected',String(value==='Donuts'));
+ document.getElementById('card-name').textContent=value==='Coffee'?'Hot Coffee':'Glazed Donut';
+}
+document.getElementById('coffee').onclick=()=>choose('Coffee');document.getElementById('donuts').onclick=()=>choose('Donuts');
+document.getElementById('product').onclick=()=>{
+ document.getElementById('options').hidden=false;document.getElementById('item-name').textContent=document.getElementById('card-name').textContent;
+ document.getElementById('size').innerHTML=category==='Coffee'?'<option value="small">Small</option><option value="medium">Medium</option>':'<option value="single">Single</option>';
+ document.getElementById('exact-price').textContent=category==='Coffee'?'$2.49':'$1.79';
+};
+document.getElementById('size').onchange=()=>document.getElementById('exact-price').textContent=category==='Donuts'?'$1.79':document.getElementById('size').value==='medium'?'$3.29':'$2.49';
+document.getElementById('close').onclick=()=>document.getElementById('options').hidden=true;
+document.getElementById('cart').onclick=()=>window.orderWasChanged=true;
+</script></body></html>
