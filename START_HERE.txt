@@ -1,0 +1,97 @@
+DUNKIN PRICE COMPARISON - WINDOWS PC
+
+DESKTOP AGENT: RUN NOW + DAILY AUTORUN
+
+1. Extract the ZIP to a permanent folder on your PC.
+2. Install Python 3.12 or newer with "Add Python to PATH" enabled.
+3. Double-click setup_windows.bat once.
+4. Double-click open_agent.bat to open the app.
+
+The app has buttons to edit your store addresses and competitor addresses.
+Your two example addresses are already included. You do not need to edit CSV files.
+
+ONE-TIME TEACHING ON YOUR PC
+
+- Click a store in the list, then "Teach selected store".
+- Select that store and the correct pricing channel on Dunkin's ordering website.
+- Confirm the store in the collector panel.
+- Pick the visible selected-store address, category, size, item name and price.
+- Use "Preview similar cards" and review ALL the preview rows.
+- Check the review box, then "Teach autorun this page".
+- Repeat on every menu page/category/size you want checked.
+- Click "Finish teaching this store". Repeat for your other stores.
+- Click "Run automatically now". A successful test is required before scheduling.
+
+AFTER THE AUTOMATIC TEST PASSES
+
+- Click "Run automatically now" whenever you want a fresh Excel report.
+- Set a daily time and click "Enable / update" for daily automatic collection.
+- Click "Open Excel reports" to find your results.
+- Click "Disable" to stop the daily schedule.
+
+Daily scheduling uses your Windows clock. Your PC must be awake and your user
+signed in. You may close the desktop app between jobs. Keep its folder in the
+same place; disable the schedule before moving or deleting the folder.
+
+IMPORTANT LIMITS
+
+The agent checks ONLY taught pages. It does not independently discover stores,
+open other menu tabs, or choose sizes. If the website does not preserve a taught
+category/size on reload, the automatic test will fail. Use "Collect with browser
+help" for those pages; they need a site-specific automation workflow before they
+can run unattended. Layout changes, session expiry or access restrictions may
+also require teaching again. Check each report's Store Status sheet.
+
+The software has been tested with synthetic pages in actual Chromium. Dunkin's
+live site, the desktop window and Windows Task Scheduler still need validation
+on your PC. No actual Dunkin prices are included in the download.
+
+Teaching keeps website session data in local_state on your own PC so the agent
+can restore the selected store. Do not share that folder. Logs are in logs;
+reports and reviewed capture journals are in reports.
+
+MANUAL COLLECTION DETAILS (OPTIONAL)
+
+1. Extract the entire ZIP into a normal folder, such as Documents\DunkinPrices.
+   Do not run the files from inside the ZIP.
+2. Install Python 3.12 or newer from https://www.python.org/downloads/windows/
+   Enable "Add Python to PATH" during installation.
+3. Double-click setup_windows.bat. Internet access is needed for installation.
+4. Your two example addresses are already in data\parent_stores.csv and
+   data\competitor_stores.csv. Edit these files to add addresses; keep their headers.
+5. Double-click run_windows.bat.
+6. In the visible browser, select the correct store and pickup menu on Dunkin's
+   website. If needed, navigate to its official ordering link manually.
+7. In the Menu Price Collector panel, confirm the store address and channel.
+8. Click Pick name, then click an item's displayed name. Pick its price the same
+   way. Pick or enter the category and observed size (Small, Medium, Single, etc.).
+9. Click Preview this item, or Preview similar cards for similarly laid-out items.
+   Review every row, correct any fields, select the rows, check the review box,
+   and click Save selected rows. Nothing in the preview is saved automatically.
+10. Open other categories and sizes and repeat. Click Hide to get the panel out
+    of your way, then Show to capture more. Reconfirm the store if you navigate
+    to another page. The saved count persists when you navigate.
+11. Click Finish store / next. Repeat for the competitor store.
+12. Open the timestamped Excel file in reports. Check Store Status before using
+    the comparison. Capture journals in reports\captures retain saved batches.
+
+The tool reads text from the pages you open and review; it is assisted scraping.
+It does not automatically discover stores, open every category, select every
+size, verify full-menu coverage, or bypass a website's access restrictions.
+If the site shows no price, open its priced ordering menu or product options.
+"From" prices and price ranges are rejected. Confirm exact size-specific prices.
+
+Positive difference = competitor is more expensive than you.
+Negative difference = competitor is cheaper than you.
+Only matching category, item name, size, currency, market and channel are compared.
+Use consistent category labels and size labels across both stores.
+
+To test Excel reporting without visiting Dunkin, run demo_windows.bat.
+Those demo prices are invented, not actual Dunkin prices.
+
+If Chromium cannot be installed, Microsoft Edge or Chrome can be used if already
+installed. The app tries them automatically. To force Edge from a command prompt:
+run_windows.bat --browser edge
+
+This package has been tested with synthetic pages in Linux; Windows launchers and
+Dunkin's live ordering interface still require validation on your PC.

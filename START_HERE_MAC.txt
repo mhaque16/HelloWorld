@@ -1,0 +1,48 @@
+DUNKIN PRICE AGENT FOR MAC
+
+1. Extract the ZIP into a permanent folder under your home folder, such as
+   /Users/your-name/DunkinPriceAgent. Keep it out of Downloads, Desktop, Documents
+   and iCloud-synced folders to avoid background-job access restrictions.
+2. Install Python 3.12 or newer using the macOS installer from:
+   https://www.python.org/downloads/macos/
+   Use the python.org installer; it includes the app's desktop window support.
+3. Double-click Setup Mac.command once. Let installation finish.
+4. Double-click Open Agent Mac.command to open the desktop app.
+
+Your Gainesville parent store and Ashburn competitor store are already included.
+Use Edit our stores and Edit competitors to add or change addresses.
+
+ONE-TIME SETUP FOR EACH STORE
+
+- Select a store, then click Teach selected store.
+- In Dunkin's browser page, select that exact store and its priced ordering menu.
+- Confirm the store and pricing channel in the collector panel.
+- Pick the visible address, category, size, item name and price text.
+- Preview similar cards, review ALL rows, and check the review box.
+- Click Teach autorun this page. Repeat for every page you want checked.
+- Finish teaching, then click Run automatically now for a test.
+
+AFTER THE TEST PASSES
+
+Use Run automatically now whenever you want fresh prices.
+For daily runs, choose a time and click Enable / update.
+Use Open Excel reports to see results, or View run logs if a run needs attention.
+
+Daily scheduling uses your Mac's local clock and your own login session. Keep your
+Mac awake and signed in at the scheduled time. The app can be closed between runs.
+Click Disable before moving or deleting the app folder. On newer macOS versions,
+background jobs may also need to be allowed in System Settings > General > Login Items.
+
+The agent collects ONLY taught pages. It does not automatically open other menu
+tabs or size choices. If those choices are not preserved after a page reload,
+the automatic test stops. Use Collect with browser help for those pages until
+a site-specific replay workflow is available. Layout or session changes may need
+teaching again. Check each report's Store Status sheet.
+
+Browser session files stay in local_state on your Mac. Do not share that folder.
+Excel files are in reports. Dates in reports use Eastern Time; scheduling uses
+the Mac's own clock. No actual Dunkin prices are included in the download.
+
+This is a Python app, not a signed macOS .app installer. Mac-specific installation,
+the desktop window and launchd scheduling still need testing on your Mac. The
+browser teaching/report workflow has been tested on sample pages in Linux.
