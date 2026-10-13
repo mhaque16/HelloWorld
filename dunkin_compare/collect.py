@@ -7,13 +7,14 @@ import urllib.robotparser
 from urllib.parse import urlsplit
 
 from .core import Store, deduplicate, make_item, normalized, parse_jsonld
+from .tls import verified_context
 
 USER_AGENT = "MenuPriceResearch/0.1"
 
 
 def read_url(url: str) -> str:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=30) as response:
+    with urllib.request.urlopen(request, timeout=30, context=verified_context()) as response:
         data = response.read(10_000_001)
         if len(data) > 10_000_000:
             raise ValueError("Menu response exceeds 10 MB")

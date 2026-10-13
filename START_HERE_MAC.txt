@@ -1,5 +1,14 @@
 DUNKIN PRICE AGENT FOR MAC
 
+IF YOU SEE CERTIFICATE_VERIFY_FAILED
+
+The updated app uses certifi's public certificate authorities while preserving
+Python's configured trust and certificate verification. Rerun Setup Mac.command
+after updating to install this dependency. Do not disable SSL verification.
+
+For the Python.org installer, you can also open Applications > Python 3.x >
+Install Certificates.command, let it finish, then restart the agent.
+
 FREE AI OPTION (NO API KEY OR TEACHING)
 
 1. Install Python and run Setup Mac.command as described below.
