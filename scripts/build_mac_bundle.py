@@ -4,7 +4,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parent.parent
 files = [ROOT / name for name in ['README.md', 'START_HERE_MAC.txt', 'requirements.txt', '.gitignore',
-                                 'Setup Mac.command', 'Open Agent Mac.command']]
+                                 'Setup Mac.command', 'Open Agent Mac.command', 'Prepare Free AI Mac.command']]
 for directory in ['dunkin_compare', 'config', 'data', 'tests', 'scripts']:
     files.extend(p for p in (ROOT / directory).rglob('*') if p.is_file()
                  and '__pycache__' not in p.parts and p.suffix in ('.py', '.js', '.json', '.csv', '.html'))

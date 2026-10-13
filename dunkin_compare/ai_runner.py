@@ -85,9 +85,19 @@ def run(root):
     from .ai_planner import VisionPlanner
     from .interactive import launch_visible
     config=settings(root)
-    key=get_key()
-    if not key:
-        raise ValueError('Add your API key using the AI settings button first. No key is stored in the download.')
+    provider=config.get('provider','openai')
+    if provider=='ollama':
+        from .local_planner import check_local,LocalVisionPlanner
+        model=config.get('local_model','gemma3:4b')
+        check_local(model)
+        planner_factory=lambda:LocalVisionPlanner(model)
+    elif provider=='openai':
+        key=get_key()
+        if not key:
+            raise ValueError('Add your API key using the AI settings button first. No key is stored in the download.')
+        planner_factory=lambda:VisionPlanner(key)
+    else:
+        raise ValueError('Choose local Ollama or OpenAI in AI settings.')
     max_steps=config.get('max_steps',60)
     if type(max_steps) is not int or not 1<=max_steps<=200:
         raise ValueError('AI step limit must be between 1 and 200 per store')
@@ -99,7 +109,7 @@ def run(root):
         try:
             for index,store in enumerate(stores):
                 context=browser.new_context(viewport={'width':1280,'height':900})
-                planner=VisionPlanner(key)
+                planner=planner_factory()
                 try:
                     page=context.new_page()
                     target=store.menu_url or 'https://www.dunkindonuts.com/en'
@@ -118,13 +128,13 @@ def run(root):
                     context.close()
                 statuses.append({'group':store.group,'store_id':store.store_id,'address':store.address,
                                  'status':status,'item_count':len(items),
-                                 'message':message+f' API calls: {planner.calls}; input tokens: {planner.input_tokens}; output tokens: {planner.output_tokens}.'})
+                                 'message':message+f' Provider: {provider}; inference calls: {planner.calls}; input tokens: {planner.input_tokens}; output tokens: {planner.output_tokens}.'})
                 print(f'{store.store_id}: {status}. {message}',flush=True)
         finally:
             browser.close()
     now=datetime.now(ZoneInfo('America/New_York'))
     output=root/'reports'/f'AI_menu_prices_{stamp}.xlsx'
-    write_report(output,collected,statuses,now,capture_method='AI navigation with DOM-evidenced prices (coverage unverified)')
+    write_report(output,collected,statuses,now,capture_method=f'{provider} AI navigation with DOM-evidenced prices (coverage unverified)')
     print(f'Saved {output}',flush=True)
     result=0 if statuses and all(s['status']=='ai_collected' for s in statuses) else 1
     if result==0:

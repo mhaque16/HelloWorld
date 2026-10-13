@@ -60,7 +60,13 @@ def automatic_missing(root=ROOT, require_test=False):
     if ai.get('enabled'):
         from .ai_credentials import get_key
         missing=[]
-        if not get_key():
+        if ai.get('provider','openai')=='ollama':
+            try:
+                from .local_planner import check_local
+                check_local(ai.get('local_model','gemma3:4b'))
+            except Exception as exc:
+                missing.append(str(exc))
+        elif not get_key():
             missing.append('Open AI settings and add your API key on this computer.')
         if any(s.channel not in ('pickup','delivery') for s in stores):
             missing.append('AI web collection supports pickup and delivery, not inferred in-store prices.')

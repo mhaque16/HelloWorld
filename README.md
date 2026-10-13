@@ -1,6 +1,35 @@
 # Dunkin store price comparison
 
-## AI page discovery: no teaching required
+## Free local AI: Ollama
+
+The app now supports **Free local (Ollama)** in AI settings. Install the free
+Ollama app, open it, and run **Prepare Free AI Mac.command** once to download
+`gemma3:4b`, an image-capable local model. Then enable AI discovery with the local
+provider and click Run now. No API key or per-run AI fee is required. A several-GB
+model download and sufficient RAM are required; 16 GB+ is recommended, and Intel
+or low-memory machines may be slow. The app includes no model weights in its ZIP.
+
+The local planner uses Ollama's `/api/chat` with screenshots, structured page
+evidence and JSON actions. Requests are fixed to `127.0.0.1:11434`, do not inherit
+HTTP proxies, and refuse redirects. Cloud-model names and models with reported
+remote backends are rejected; there is no paid-API fallback. Local readiness checks
+query installed models and vision capability without generating tokens. Page
+evidence is limited to on-screen/store-context elements to reduce local context
+size. Price/store/channel validation is shared with the paid planner.
+
+Local mode preserves the existing browser, Excel and scheduling workflows, but
+smaller models may fail to navigate complex menus. It requires an initial run to
+review results; full-menu coverage remains unverified. The local API contract and
+readiness checks are mocked in tests, and the shared browser is exercised against
+synthetic pages. **Actual Ollama inference has not been tested in this environment**;
+official Ollama documentation requests were blocked by the cloud network policy.
+Native Mac installation and live Dunkin still need validation on your Mac.
+
+To update, disable any older schedule, extract the new ZIP to a new folder and
+rerun Setup Mac.command. Install/open Ollama, prepare the model, then choose the
+free provider explicitly. Existing paid-mode settings do not silently switch.
+
+## Optional paid AI page discovery: no teaching required
 
 The desktop app now has **AI settings**. With an OpenAI API key and separate API
 billing, enable AI discovery and click **Run automatically now**. The planner

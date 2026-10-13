@@ -1,5 +1,24 @@
 DUNKIN PRICE AGENT FOR MAC
 
+FREE AI OPTION (NO API KEY OR TEACHING)
+
+1. Install Python and run Setup Mac.command as described below.
+2. Download/install Ollama from https://ollama.com/download/mac and open its app.
+3. Double-click Prepare Free AI Mac.command. Press Return when prompted to download
+   the Gemma 3 4B vision model. The download is several GB; 16 GB+ memory is recommended.
+4. Open the agent, click AI settings, and choose Free local (Ollama).
+5. Check Use AI discovery, save, and click Run automatically now.
+
+No API key, subscription or per-run AI usage charge is required in local mode.
+Screenshots/page text go only to Ollama on your own computer, not to OpenAI. The
+agent does not fall back to a paid API if Ollama is unavailable. Keep Ollama open
+for scheduled runs. Local inference can be slow, especially on Intel or low-RAM
+Macs; a small model may fail on complex menus. Check Excel's Store Status sheet.
+
+Local-model payloads/checks and the shared browser engine are tested with mocks
+and sample pages. Real Ollama inference and live Dunkin collection still need a
+test on your Mac. Older paid API instructions below are OPTIONAL.
+
 NEW: AI MODE WITHOUT TEACHING
 
 After installation, open the app and click AI settings.

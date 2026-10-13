@@ -40,7 +40,7 @@ class App:
         ttk.Button(buttons, text='View run logs', command=lambda: self.open_folder(ROOT / 'logs')).pack(side='left', padx=8)
         ttk.Separator(frame).pack(fill='x', pady=14)
         ttk.Label(frame, text='Automatic collection', font=('Segoe UI', 12, 'bold')).pack(anchor='w')
-        ttk.Label(frame, text='AI mode discovers page controls without teaching. Add your API key in AI settings.\nManual browser help and taught layouts remain optional. Test Run now before scheduling.').pack(anchor='w')
+        ttk.Label(frame, text='AI discovers page controls without teaching. Choose free local AI in AI settings.\nManual browser help and taught layouts remain optional. Test Run now before scheduling.').pack(anchor='w')
         self.tree = ttk.Treeview(frame, columns=('group', 'address', 'ready'), show='headings', height=5)
         for key, label, width in [('group', 'Group', 95), ('address', 'Store address', 490), ('ready', 'Autorun setup', 180)]:
             self.tree.heading(key, text=label)
@@ -125,7 +125,7 @@ class App:
                     from .ai_runner import settings
                     if not settings(ROOT).get('enabled'):
                         messagebox.showinfo('Enable page discovery',
-                                            'Open AI settings to enable automatic page discovery with your API key. No teaching is required in AI mode.',parent=self.window)
+                                            'Open AI settings and choose free local AI or the optional paid API. No teaching is required in AI mode.',parent=self.window)
                         self.ai_settings()
                         return
                     messagebox.showinfo('First-time setup needed', '\n'.join(missing), parent=self.window)
@@ -173,14 +173,14 @@ class App:
             if missing:
                 raise ValueError('\n'.join(missing))
             from .ai_runner import settings
-            if settings(ROOT).get('enabled') and not messagebox.askyesno(
+            if settings(ROOT).get('enabled') and settings(ROOT).get('provider','openai')=='openai' and not messagebox.askyesno(
                     'Enable daily AI usage?',
                     'Daily runs send ordering-page screenshots/text to OpenAI and use your API billing account. '
                     'The AI-step limit is not a dollar-spending limit. Enable daily AI runs?',parent=self.window):
                 return
             configure_schedule(self.time.get())
             self.refresh()
-            messagebox.showinfo('Daily autorun enabled', 'The agent will check taught pages daily while this computer is awake and you are signed in. Reports and logs are saved locally.', parent=self.window)
+            messagebox.showinfo('Daily autorun enabled', 'The agent will collect prices daily while this computer is awake and you are signed in. Keep Ollama running if using local AI. Reports and logs are saved locally.', parent=self.window)
         except Exception as exc:
             messagebox.showerror('Schedule needs setup', str(exc), parent=self.window)
 
@@ -200,7 +200,7 @@ class App:
         config=settings(ROOT)
         dialog=tk.Toplevel(self.window)
         dialog.title('AI page discovery settings')
-        dialog.geometry('620x410')
+        dialog.geometry('650x560')
         dialog.transient(self.window)
         dialog.grab_set()
         frame=ttk.Frame(dialog,padding=16)
@@ -209,38 +209,71 @@ class App:
         def api_key_page():
             import webbrowser
             webbrowser.open('https://platform.openai.com/api-keys')
-        ttk.Button(frame,text='Open API key page',command=api_key_page).pack(anchor='w')
-        ttk.Label(frame,text='Requires an OpenAI API key with separate API billing. ChatGPT subscriptions\ndo not include API usage. Screenshots and menu-page text are sent to OpenAI.').pack(anchor='w',pady=10)
+        choice=tk.StringVar(value='Paid OpenAI API' if config.get('provider','openai' if config.get('enabled') else 'ollama')=='openai' else 'Free local (Ollama)')
+        ttk.Label(frame,text='AI provider').pack(anchor='w',pady=(10,0))
+        chooser=ttk.Combobox(frame,textvariable=choice,state='readonly',values=['Free local (Ollama)','Paid OpenAI API'],width=32)
+        chooser.pack(anchor='w')
+        explanation=tk.StringVar()
+        ttk.Label(frame,textvariable=explanation,wraplength=600).pack(anchor='w',pady=8)
+        local_frame=ttk.Frame(frame)
+        local_frame.pack(fill='x')
+        model=tk.StringVar(value=config.get('local_model','gemma3:4b'))
+        ttk.Label(local_frame,text='Local vision model').pack(anchor='w')
+        ttk.Entry(local_frame,textvariable=model,width=30).pack(anchor='w')
+        def download_ollama():
+            import webbrowser
+            webbrowser.open('https://ollama.com/download/mac' if sys.platform=='darwin' else 'https://ollama.com/download')
+        ttk.Button(local_frame,text='Download Ollama (free)',command=download_ollama).pack(anchor='w',pady=4)
+        if sys.platform=='darwin':
+            ttk.Button(local_frame,text='Prepare free model',command=lambda:subprocess.Popen(['open',str(ROOT/'Prepare Free AI Mac.command')])).pack(anchor='w')
+        paid_frame=ttk.Frame(frame)
         enabled=tk.BooleanVar(value=config.get('enabled',False))
         shown=tk.BooleanVar(value=config.get('show_browser',True))
         steps=tk.StringVar(value=str(config.get('max_steps',60)))
         key=tk.StringVar()
         ttk.Checkbutton(frame,text='Use AI discovery for Run now and scheduled runs',variable=enabled).pack(anchor='w')
-        ttk.Label(frame,text='API key (saved in Mac Keychain or Windows Credential Manager)').pack(anchor='w',pady=(10,0))
-        ttk.Entry(frame,textvariable=key,show='•',width=65).pack(fill='x')
-        ttk.Label(frame,text='A key is already available; leave blank to keep it.' if get_key() else 'No key is saved. Enter it here; never paste it into chat.').pack(anchor='w')
+        ttk.Button(paid_frame,text='Open API key page',command=api_key_page).pack(anchor='w')
+        ttk.Label(paid_frame,text='API key (saved in Mac Keychain or Windows Credential Manager)').pack(anchor='w')
+        ttk.Entry(paid_frame,textvariable=key,show='•',width=65).pack(fill='x')
+        ttk.Label(paid_frame,text='Leave blank to keep an existing saved key. Never paste it into chat.').pack(anchor='w')
+        def provider_changed(event=None):
+            local_frame.pack_forget();paid_frame.pack_forget()
+            if choice.get()=='Free local (Ollama)':
+                local_frame.pack(fill='x',after=chooser)
+                explanation.set('No API key or usage charges. Screenshots stay in local inference on this computer. Install/open Ollama and prepare the model once. 16 GB+ memory is recommended; small local models may struggle with complex menus.')
+            else:
+                paid_frame.pack(fill='x',after=chooser)
+                explanation.set('Separate OpenAI API billing. ChatGPT subscriptions do not include API usage. Screenshots and page text are sent to OpenAI. The call limit is not a dollar cap.')
+        chooser.bind('<<ComboboxSelected>>',provider_changed)
+        provider_changed()
         line=ttk.Frame(frame)
         line.pack(fill='x',pady=10)
-        ttk.Label(line,text='Maximum AI calls per store (1–200):').pack(side='left')
+        ttk.Label(line,text='Maximum AI steps per store (1–200):').pack(side='left')
         ttk.Entry(line,textvariable=steps,width=6).pack(side='left',padx=8)
         ttk.Checkbutton(frame,text='Show the browser while AI works',variable=shown).pack(anchor='w')
-        ttk.Label(frame,text='The call limit is not a dollar cap. Check your API billing limits.\nPrices require observed store, channel, item, size and exact price evidence.').pack(anchor='w',pady=8)
+        ttk.Label(frame,text='Prices require observed store, channel, item, size and exact price evidence.').pack(anchor='w',pady=8)
         def save():
             try:
                 limit=int(steps.get())
                 if not 1<=limit<=200:
                     raise ValueError('Choose 1–200 calls per store.')
+                provider='ollama' if choice.get()=='Free local (Ollama)' else 'openai'
                 schedule_file=ROOT/'local_state/schedule.json'
-                if enabled.get() and not config.get('enabled') and schedule_file.exists() and json.loads(schedule_file.read_text()).get('enabled'):
+                if enabled.get() and provider=='openai' and (not config.get('enabled') or config.get('provider','openai')!='openai') and schedule_file.exists() and json.loads(schedule_file.read_text()).get('enabled'):
                     if not messagebox.askyesno('Use AI in the existing daily schedule?',
                                                'Your daily schedule will also send page screenshots/text to OpenAI and use your API billing account. Continue?',parent=dialog):
                         return
-                if key.get().strip():
+                if provider=='ollama':
+                    import re
+                    if not re.fullmatch(r'[A-Za-z0-9._/:+\-]{1,100}',model.get().strip()) or 'cloud' in model.get().lower():
+                        raise ValueError('Choose a local vision model, not a cloud model.')
+                if provider=='openai' and key.get().strip():
                     save_key(key.get())
-                if enabled.get() and not get_key():
+                if enabled.get() and provider=='openai' and not get_key():
                     raise ValueError('An API key is required to enable AI discovery.')
                 atomic_json(ROOT/'local_state/ai_settings.json',{
-                    'enabled':enabled.get(),'max_steps':limit,'show_browser':shown.get()})
+                    'enabled':enabled.get(),'max_steps':limit,'show_browser':shown.get(),
+                    'provider':provider,'local_model':model.get().strip()})
                 key.set('')
                 dialog.destroy()
                 self.refresh()
